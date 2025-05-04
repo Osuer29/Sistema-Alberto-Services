@@ -1,0 +1,41 @@
+<!-- cuadre-general.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuadre General - Tienda de Celulares</title>
+  <link rel="stylesheet" href="cuadre-general.css">
+</head>
+<body>
+  <header>
+    <h1>Cuadre General</h1>
+  </header>
+
+  <section class="filtro">
+    <h2>Filtrar por Fecha</h2>
+    <input type="date" id="filtro-fecha" name="filtro-fecha">
+    <button id="filtrar-cuadre">Filtrar</button>
+  </section>
+
+  <section class="resumen">
+    <h2>Resumen del Día</h2>
+    <table id="tabla-cuadre">
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Aquí se mostrarán los movimientos del día -->
+      </tbody>
+    </table>
+    <div id="total-monto">
+      <strong>Total del Día:</strong> <span id="total-dia">0</span>
+    </div>
+  </section>
+
+  <script src="cuadre-general.js"></script>
+</body>
+</html>
