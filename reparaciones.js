@@ -35,14 +35,19 @@ function renderReparaciones() {
     const card = document.createElement("div");
     card.className = "reparacion-card";
     card.innerHTML = `
-      <h4>${rep.equipo} - ${rep.cliente}</h4>
-      <p><strong>Tel:</strong> ${rep.telefono}</p>
-      <p><strong>Falla:</strong> ${rep.falla}</p>
-      <p><strong>Abono:</strong> $${rep.abono.toFixed(2)}</p>
-      <p><strong>Estado:</strong> ${rep.estado}</p>
-      <button onclick="abrirTaller(${rep.id})">Agregar Producto</button>
-      <button onclick="marcarLista(${rep.id})">Marcar como Lista</button>
-    `;
+  <h4>${rep.equipo} - ${rep.cliente}</h4>
+  <p><strong>Tel:</strong> ${rep.telefono}</p>
+  <p><strong>Falla:</strong> ${rep.falla}</p>
+  <p><strong>Abono:</strong> $${rep.abono.toFixed(2)}</p>
+  <p><strong>Estado:</strong> ${rep.estado}</p>
+  <button onclick="abrirTaller(${rep.id})">Agregar Producto</button>
+  <button onclick="editarReparacion(${rep.id})">Editar</button>
+  <button onclick="cambiarEstado(${rep.id})">
+    ${rep.estado === 'Lista' ? 'Marcar como En Taller' : 'Marcar como Lista'}
+  </button>
+  <button onclick="eliminarReparacion(${rep.id})">Eliminar</button>
+`;
+
     listaReparaciones.appendChild(card);
   });
 }
@@ -82,6 +87,21 @@ function marcarLista(id) {
   renderReparaciones();
 }
 
+function cambiarEstado(id) {
+    const rep = reparaciones.find(r => r.id === id);
+    rep.estado = rep.estado === "Lista" ? "En taller" : "Lista";
+    localStorage.setItem("reparaciones", JSON.stringify(reparaciones));
+    renderReparaciones();
+  }
+
+  function eliminarReparacion(id) {
+    if (confirm("¿Estás seguro de que deseas eliminar esta reparación?")) {
+      reparaciones = reparaciones.filter(r => r.id !== id);
+      localStorage.setItem("reparaciones", JSON.stringify(reparaciones));
+      renderReparaciones();
+    }
+  }  
+
 // Cerrar modal
 closeModal.onclick = () => {
   modal.style.display = "none";
@@ -92,3 +112,4 @@ window.onclick = (event) => {
 
 // Inicializar
 renderReparaciones();
+

@@ -83,27 +83,53 @@ function actualizarFactura() {
 
 // Generar la factura en PDF
 generarFacturaBtn.addEventListener("click", () => {
-  if (productosSeleccionados.length > 0) {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Factura de Venta', 14, 20);
-
-    let yPosition = 30;
-
-    productosSeleccionados.forEach(p => {
-      doc.setFontSize(12);
-      doc.text(`${p.tipo}: ${p.nombre} - $${p.precio}`, 14, yPosition);
-      yPosition += 10;
-    });
-
-    doc.text(`Total: $${totalFactura.toFixed(2)}`, 14, yPosition);
-
-    // Descargar el PDF
-    doc.save('Factura.pdf');
-  } else {
-    alert("Por favor, agregue productos o reparaciones a la factura.");
-  }
-});
+    if (productosSeleccionados.length > 0) {
+      const fecha = new Date().toISOString().slice(0, 10);
+  
+      const factura = {
+        id: Date.now(),
+        productos: productosSeleccionados,
+        total: totalFactura,
+        fecha: fecha,
+        descripcion: productosSeleccionados.map(p => p.nombre).join(", ")
+      };
+  
+      // Guardar en LocalStorage
+      const facturasGuardadas = JSON.parse(localStorage.getItem("facturas")) || [];
+      facturasGuardadas.push({
+        monto: factura.total,
+        fecha: factura.fecha,
+        descripcion: factura.descripcion
+      });
+      localStorage.setItem("facturas", JSON.stringify(facturasGuardadas));
+  
+      // Generar PDF
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('Factura de Venta', 14, 20);
+  
+      let yPosition = 30;
+      productosSeleccionados.forEach(p => {
+        doc.setFontSize(12);
+        doc.text(`${p.tipo}: ${p.nombre} - $${p.precio}`, 14, yPosition);
+        yPosition += 10;
+      });
+  
+      doc.text(`Total: $${totalFactura.toFixed(2)}`, 14, yPosition);
+  
+      doc.save(`Factura_${factura.id}.pdf`);
+  
+      // Limpiar factura actual
+      productosSeleccionados = [];
+      totalFactura = 0;
+      actualizarFactura();
+  
+      alert("Factura generada y guardada exitosamente.");
+    } else {
+      alert("Por favor, agregue productos o reparaciones a la factura.");
+    }
+  });
+  
 
 // Cargar productos y reparaciones cuando se cargue la página
 window.onload = () => {

@@ -1,85 +1,127 @@
-// cuadre-general.js
-document.addEventListener('DOMContentLoaded', () => {
-    const btnFiltrarCuadre = document.getElementById('filtrar-cuadre');
-    const filtroFecha = document.getElementById('filtro-fecha');
-    const tablaCuadre = document.getElementById('tabla-cuadre').getElementsByTagName('tbody')[0];
-    const totalDiaElement = document.getElementById('total-dia');
-  
-    // Función para cargar todos los movimientos del día
-    function cargarMovimientos(fechaFiltro = null) {
-      // Cargar los registros de ventas, ingresos y gastos desde LocalStorage
-      const ventas = JSON.parse(localStorage.getItem('ventas')) || [];
-      const ingresos = JSON.parse(localStorage.getItem('ingresos')) || [];
-      const gastos = JSON.parse(localStorage.getItem('gastos')) || [];
-      const reparaciones = JSON.parse(localStorage.getItem('reparaciones')) || [];
-  
-      // Filtrar por fecha si es necesario
-      const movimientos = [];
-      const fechaHoy = new Date().toISOString().split('T')[0]; // Fecha de hoy (YYYY-MM-DD)
-  
-      // Filtrar por fecha si el usuario seleccionó una fecha
-      if (fechaFiltro) {
-        // Filtrar ingresos
-        ingresos.filter(ingreso => ingreso.fecha === fechaFiltro).forEach(ingreso => {
-          movimientos.push({ descripcion: `Ingreso: ${ingreso.descripcion}`, monto: ingreso.monto });
-        });
-  
-        // Filtrar ventas
-        ventas.filter(venta => venta.fecha === fechaFiltro).forEach(venta => {
-          movimientos.push({ descripcion: `Venta: ${venta.descripcion}`, monto: venta.monto });
-        });
-  
-        // Filtrar gastos
-        gastos.filter(gasto => gasto.fecha === fechaFiltro).forEach(gasto => {
-          movimientos.push({ descripcion: `Gasto: ${gasto.descripcion}`, monto: gasto.monto });
-        });
-  
-        // Filtrar reparaciones
-        reparaciones.filter(reparacion => reparacion.fecha === fechaFiltro).forEach(reparacion => {
-          movimientos.push({ descripcion: `Reparación: ${reparacion.descripcion}`, monto: reparacion.costo });
-        });
-      } else {
-        // Si no hay filtro, mostrar todos los registros de hoy
-        ingresos.filter(ingreso => ingreso.fecha === fechaHoy).forEach(ingreso => {
-          movimientos.push({ descripcion: `Ingreso: ${ingreso.descripcion}`, monto: ingreso.monto });
-        });
-  
-        ventas.filter(venta => venta.fecha === fechaHoy).forEach(venta => {
-          movimientos.push({ descripcion: `Venta: ${venta.descripcion}`, monto: venta.monto });
-        });
-  
-        gastos.filter(gasto => gasto.fecha === fechaHoy).forEach(gasto => {
-          movimientos.push({ descripcion: `Gasto: ${gasto.descripcion}`, monto: gasto.monto });
-        });
-  
-        reparaciones.filter(reparacion => reparacion.fecha === fechaHoy).forEach(reparacion => {
-          movimientos.push({ descripcion: `Reparación: ${reparacion.descripcion}`, monto: reparacion.costo });
-        });
-      }
-  
-      // Actualizar la tabla
-      tablaCuadre.innerHTML = '';
-      let totalMonto = 0;
-      movimientos.forEach(movimiento => {
-        const row = tablaCuadre.insertRow();
-        row.innerHTML = `
-          <td>${movimiento.descripcion}</td>
-          <td>${movimiento.monto}</td>
-        `;
-        totalMonto += parseFloat(movimiento.monto);
-      });
-  
-      // Mostrar el total
-      totalDiaElement.textContent = totalMonto.toFixed(2);
-    }
-  
-    // Evento para filtrar los datos
-    btnFiltrarCuadre.addEventListener('click', () => {
-      const fechaFiltro = filtroFecha.value;
-      cargarMovimientos(fechaFiltro);
+const { jsPDF } = window.jspdf;
+
+document.addEventListener('DOMContentLoaded', function () {
+  const fechaInput = document.getElementById('fecha-filtro');
+  const btnFiltrar = document.getElementById('btn-filtrar');
+  const btnPDF = document.getElementById('btn-pdf');
+  const btnExcel = document.getElementById('btn-excel');
+
+  let datosResumen = { ingresos: [], gastos: [], facturas: [], fecha: "" };
+
+  function cargarDatos(nombreLS) {
+    return JSON.parse(localStorage.getItem(nombreLS)) || [];
+  }
+
+  function filtrarPorFecha(data, fecha) {
+    return data.filter(item => item.fecha === fecha);
+  }
+
+  function renderLista(elementId, datos) {
+    const lista = document.getElementById(elementId);
+    lista.innerHTML = '';
+    datos.forEach(d => {
+      const li = document.createElement('li');
+      li.textContent = `${d.descripcion || d.concepto || 'Registro'} - $${parseFloat(d.monto).toFixed(2)}`;
+      lista.appendChild(li);
     });
-  
-    // Cargar los movimientos al inicio
-    cargarMovimientos();
+  }
+
+  function sumarTotales(datos) {
+    return datos.reduce((acc, item) => acc + parseFloat(item.monto), 0);
+  }
+
+  function actualizarCuadre(fecha) {
+    const ingresos = filtrarPorFecha(cargarDatos('ingresos'), fecha);
+    const gastos = filtrarPorFecha(cargarDatos('gastos'), fecha);
+    const facturas = filtrarPorFecha(cargarDatos('facturas'), fecha);
+
+    renderLista('lista-ingresos', ingresos);
+    renderLista('lista-gastos', gastos);
+    renderLista('lista-facturas', facturas);
+
+    const totalIngresos = sumarTotales(ingresos);
+    const totalGastos = sumarTotales(gastos);
+    const totalFacturacion = sumarTotales(facturas);
+    const resumenFinal = totalIngresos + totalFacturacion - totalGastos;
+
+    document.getElementById('total-ingresos').textContent = `$${totalIngresos.toFixed(2)}`;
+    document.getElementById('total-gastos').textContent = `$${totalGastos.toFixed(2)}`;
+    document.getElementById('total-facturacion').textContent = `$${totalFacturacion.toFixed(2)}`;
+    document.getElementById('resumen-final').textContent = `$${resumenFinal.toFixed(2)}`;
+
+    // Guardar para exportar
+    datosResumen = {
+      fecha,
+      ingresos, gastos, facturas,
+      totalIngresos, totalGastos, totalFacturacion, resumenFinal
+    };
+  }
+
+  // Exportar a PDF
+  btnPDF.addEventListener('click', () => {
+    const doc = new jsPDF();
+    let y = 20;
+
+    doc.setFontSize(16);
+    doc.text(`Cuadre del Día - ${datosResumen.fecha}`, 14, y); y += 10;
+
+    doc.setFontSize(12);
+
+    doc.text('INGRESOS:', 14, y); y += 8;
+    datosResumen.ingresos.forEach(d => {
+      doc.text(`- ${d.descripcion}: $${parseFloat(d.monto).toFixed(2)}`, 18, y); y += 6;
+    });
+    doc.text(`Total Ingresos: $${datosResumen.totalIngresos.toFixed(2)}`, 18, y); y += 10;
+
+    doc.text('GASTOS:', 14, y); y += 8;
+    datosResumen.gastos.forEach(d => {
+      doc.text(`- ${d.descripcion}: $${parseFloat(d.monto).toFixed(2)}`, 18, y); y += 6;
+    });
+    doc.text(`Total Gastos: $${datosResumen.totalGastos.toFixed(2)}`, 18, y); y += 10;
+
+    doc.text('FACTURACIÓN:', 14, y); y += 8;
+    datosResumen.facturas.forEach(d => {
+      doc.text(`- ${d.descripcion}: $${parseFloat(d.monto).toFixed(2)}`, 18, y); y += 6;
+    });
+    doc.text(`Total Facturación: $${datosResumen.totalFacturacion.toFixed(2)}`, 18, y); y += 10;
+
+    doc.setFontSize(14);
+    doc.text(`Resumen Final: $${datosResumen.resumenFinal.toFixed(2)}`, 14, y); y += 10;
+
+    doc.save(`cuadre_${datosResumen.fecha}.pdf`);
   });
-  
+
+  // Exportar a Excel
+  btnExcel.addEventListener('click', () => {
+    const wb = XLSX.utils.book_new();
+
+    function sheetData(titulo, data) {
+      return [[titulo], ['Descripción', 'Monto'], ...data.map(d => [d.descripcion, d.monto])];
+    }
+
+    const ingresosWS = XLSX.utils.aoa_to_sheet(sheetData("Ingresos", datosResumen.ingresos));
+    const gastosWS = XLSX.utils.aoa_to_sheet(sheetData("Gastos", datosResumen.gastos));
+    const facturasWS = XLSX.utils.aoa_to_sheet(sheetData("Facturación", datosResumen.facturas));
+
+    XLSX.utils.book_append_sheet(wb, ingresosWS, "Ingresos");
+    XLSX.utils.book_append_sheet(wb, gastosWS, "Gastos");
+    XLSX.utils.book_append_sheet(wb, facturasWS, "Facturación");
+
+    XLSX.writeFile(wb, `cuadre_${datosResumen.fecha}.xlsx`);
+  });
+
+  // Botón aplicar filtro
+  btnFiltrar.addEventListener('click', () => {
+    const fechaSeleccionada = fechaInput.value;
+    if (fechaSeleccionada) {
+      actualizarCuadre(fechaSeleccionada);
+    } else {
+      alert('Selecciona una fecha para aplicar el filtro.');
+    }
+  });
+
+  // Al iniciar: cargar fecha de hoy
+  const hoy = new Date().toISOString().slice(0, 10);
+  fechaInput.value = hoy;
+  actualizarCuadre(hoy);
+});

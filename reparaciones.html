@@ -39,11 +39,27 @@
         <input type="text" id="producto" placeholder="Producto (Ej. Pantalla iPhone)">
         <input type="number" id="costoProducto" placeholder="Costo">
         <button type="submit">Agregar a Reparación</button>
+        <button onclick="editarReparacion">Editar</button>
       </form>
       <div id="productosAgregados"></div>
     </div>
   </div>
-
   <script src="reparaciones.js"></script>
+
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <span class="close-editar">&times;</span>
+      <h3>Editar Reparación</h3>
+      <form id="formEditar">
+        <input type="text" id="editCliente" placeholder="Nombre del Cliente" required>
+        <input type="text" id="editTelefono" placeholder="Teléfono">
+        <input type="text" id="editEquipo" placeholder="Equipo" required>
+        <input type="text" id="editFalla" placeholder="Falla" required>
+        <input type="number" id="editAbono" placeholder="Abono">
+        <button type="submit">Guardar Cambios</button>
+      </form>
+    </div>
+  </div>
+  
 </body>
 </html>

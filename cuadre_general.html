@@ -1,41 +1,48 @@
-<!-- cuadre-general.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cuadre General - Tienda de Celulares</title>
+  <title>Cuadre General</title>
   <link rel="stylesheet" href="cuadre-general.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Cuadre General</h1>
-  </header>
+
+  <h1>Cuadre General del Día</h1>
 
   <section class="filtro">
     <h2>Filtrar por Fecha</h2>
-    <input type="date" id="filtro-fecha" name="filtro-fecha">
-    <button id="filtrar-cuadre">Filtrar</button>
+    <input type="date" id="fecha-filtro" />
+    <button id="btn-filtrar">Aplicar Filtro</button>
+    <button id="btn-pdf">Exportar a PDF</button>
+    <button id="btn-excel">Exportar a Excel</button>
   </section>
 
-  <section class="resumen">
-    <h2>Resumen del Día</h2>
-    <table id="tabla-cuadre">
-      <thead>
-        <tr>
-          <th>Descripción</th>
-          <th>Monto</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Aquí se mostrarán los movimientos del día -->
-      </tbody>
-    </table>
-    <div id="total-monto">
-      <strong>Total del Día:</strong> <span id="total-dia">0</span>
-    </div>
-  </section>
+  <div class="resumen" id="resumen-ingresos">
+    <h2>Ingresos</h2>
+    <ul id="lista-ingresos"></ul>
+    <p><strong>Total Ingresos: </strong><span id="total-ingresos">$0.00</span></p>
+  </div>
 
-  <script src="cuadre-general.js"></script>
+  <div class="resumen" id="resumen-gastos">
+    <h2>Gastos</h2>
+    <ul id="lista-gastos"></ul>
+    <p><strong>Total Gastos: </strong><span id="total-gastos">$0.00</span></p>
+  </div>
+
+  <div class="resumen" id="resumen-facturas">
+    <h2>Facturación</h2>
+    <ul id="lista-facturas"></ul>
+    <p><strong>Total Facturación: </strong><span id="total-facturacion">$0.00</span></p>
+  </div>
+
+  <hr>
+  <div class="total-final">
+    <h2>Resumen Final</h2>
+    <p><strong>Ingresos + Facturación - Gastos = </strong><span id="resumen-final">$0.00</span></p>
+  </div>
+
+  <script src="cuadre_general.js"></script>
 </body>
 </html>
