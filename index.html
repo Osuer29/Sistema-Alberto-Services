@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <title>Inicio - Sistema de Tienda de Celulares</title>
     <link rel="stylesheet" href="inicio.css">
-    <link rel="stylesheet" href="inventario.html">
+    <link rel="icon" href="logo.png">
+    <link rel="icon" href="icono.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+
+
 </head>
 <body>
     <!-- Cabecera -->
@@ -14,43 +26,70 @@
             <img src="logo.png" alt="Logo de la tienda">
             <h1>Alberto Services</h1>
         </div>
+
         <nav>
-            <ul>
-                <li><a href="inventario.html">Inventario</a></li>
-                <li><a href="ventas.html">Ventas</a></li>
-                <li><a href="reparaciones.html">Reparaciones</a></li>
-                <li><a href="facturacion.html">Facturación</a></li>
-                <li><a href="gastos.html">Gastos</a></li>
-                <li><a href="ingresos.html">Ingresos</a></li>
-                <li><a href="cuadre_general.html">Cuadre General</a></li>
-            </ul>
-        </nav>
+    <ul>
+        <li><a href="inventario.html"><i class="fas fa-boxes"></i> Inventario</a></li>
+        <li><a href="ventas.html"><i class="fas fa-cash-register"></i> Ventas</a></li>
+        <li><a href="reparaciones.html"><i class="fas fa-tools"></i> Reparaciones</a></li>
+        <li><a href="facturacion.html"><i class="fas fa-file-invoice-dollar"></i> Facturación</a></li>
+        <li><a href="gastos.html"><i class="fas fa-money-bill-wave"></i> Gastos</a></li>
+        <li><a href="ingresos.html"><i class="fas fa-coins"></i> Ingresos</a></li>
+        <li><a href="cuadre_general.html"><i class="fas fa-balance-scale"></i> Cuadre General</a></li>
+        <li><a href="devolucion.html"><i class="fas fa-undo"></i> Devoluciones</a></li>
+    </ul>
+</nav>
+
         <button class="logout">Cerrar sesión</button>
     </header>
 
     <!-- Accesos Directos -->
     <section class="accesos">
-        <h2>Accesos Rápidos</h2>
-        <div class="botones">
-            <button class="btn">Nuevo Producto</button>
-            <button class="btn">Nueva Venta</button>
-            <button class="btn">Nueva Reparación</button>
-            <button class="btn">Facturar</button>
-            <button class="btn">Registrar Gasto</button>
-            <button class="btn">Registrar Ingreso</button>
-            <button class="btn">Ver Cuadre General</button>
-        </div>
-    </section>
+    <h2>Accesos Rápidos</h2>
+    <div class="botones">
+       <button class="btn" data-action="inventario"><i class="fas fa-box-open"></i> Nuevo Producto</button>
+       <button class="btn" data-action="ventas"><i class="fas fa-cash-register"></i> Nueva Venta</button>
+       <button class="btn" data-action="reparaciones"><i class="fas fa-tools"></i> Nueva Reparación</button>
+       <button class="btn" data-action="facturacion"><i class="fas fa-file-invoice-dollar"></i> Facturar</button>
+       <button class="btn" data-action="gastos"><i class="fas fa-money-bill-wave"></i> Registrar Gasto</button>
+       <button class="btn" data-action="ingresos"><i class="fas fa-coins"></i> Registrar Ingreso</button>
+       <button class="btn" data-action="cuadre_general"><i class="fas fa-balance-scale"></i> Ver Cuadre General</button>
+       <button class="btn" data-action="Historial de Facturas"><i class="fas fa-receipt"></i> Ver Facturas</button>
+
+    </div>
+</section>
+
 
     <!-- Notificaciones -->
     <section class="notificaciones">
         <h2>Notificaciones</h2>
         <ul>
-            <li>¡Nuevo producto con bajo stock!</li>
-            <li>Reparación de teléfono con estado "Listo" pendiente de facturación.</li>
+            <li>¡Bienvenido!</li>
+            <li>Puedes comenzar hacer tus gestiones</li>
         </ul>
     </section>
-
     <script src="inicio.js"></script>
+
+    <script src="auth.js"></script>
+
+    <!-- Contenedor para las partículas -->
+     <div id="tsparticles" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+
+    <!-- Script de tsParticles -->
+      <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <!-- Tu script personalizado -->
+      <script src="particulas.js"></script>
+
+
+
+
+<script>
+    validarSesionActiva();
+    controlarModulosPorRol();
+
+    // Activar cierre de sesión
+    document.querySelector('.logout').addEventListener('click', cerrarSesion);
+</script>
+
 </body>
 </html>

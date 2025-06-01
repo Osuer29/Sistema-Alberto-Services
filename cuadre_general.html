@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  
   <meta charset="UTF-8">
   <title>Cuadre General</title>
   <link rel="stylesheet" href="cuadre-general.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body>
 
@@ -17,6 +19,8 @@
     <button id="btn-filtrar">Aplicar Filtro</button>
     <button id="btn-pdf">Exportar a PDF</button>
     <button id="btn-excel">Exportar a Excel</button>
+    <button id="borrarHistorialFacturacion">🗑️ Borrar Historial de Facturación</button>
+
   </section>
 
   <div class="resumen" id="resumen-ingresos">
@@ -36,13 +40,19 @@
     <ul id="lista-facturas"></ul>
     <p><strong>Total Facturación: </strong><span id="total-facturacion">$0.00</span></p>
   </div>
-
+  
+  <div class="card">
+    <h3>Ganancias</h3>
+    <p id="gananciasValor">$0.00</p>
+  </div>
+  
+ 
   <hr>
   <div class="total-final">
     <h2>Resumen Final</h2>
     <p><strong>Ingresos + Facturación - Gastos = </strong><span id="resumen-final">$0.00</span></p>
   </div>
 
-  <script src="cuadre_general.js"></script>
+  <script src="cuadre-general.js"></script>
 </body>
 </html>

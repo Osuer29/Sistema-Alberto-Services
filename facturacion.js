@@ -6,136 +6,348 @@ const reparacionSelect = document.getElementById("reparacion");
 const productosSeleccionadosUl = document.getElementById("productosSeleccionados");
 const totalFacturaSpan = document.getElementById("totalFactura");
 const generarFacturaBtn = document.getElementById("generarFacturaBtn");
+const vaciarFacturaBtn = document.getElementById("vaciarFacturaBtn");
 
 let productosSeleccionados = [];
 let totalFactura = 0;
 
-// Función para renderizar los productos en el select
+// Renderizar productos
 function renderizarProductos() {
   productoSelect.innerHTML = "<option value=''>Seleccione un producto</option>";
-  productos.forEach(p => {
-    const option = document.createElement("option");
-    option.value = p.id;
-    option.textContent = `${p.nombre} - $${p.precio}`;
-    productoSelect.appendChild(option);
-  });
-}
+  productos = JSON.parse(localStorage.getItem("inventario")) || [];
 
-// Función para renderizar las reparaciones en el select
-function renderizarReparaciones() {
-  reparacionSelect.innerHTML = "<option value=''>Seleccione una reparación</option>";
-  reparaciones.forEach(r => {
-    if (r.estado === "Lista") {
+  // Asegurar que cada producto tenga un id único
+  productos.forEach((p, i) => {
+    if (!p.id) p.id = Date.now() + i;
+  });
+
+  productos.forEach(p => {
+    if (p.stock > 0) {
       const option = document.createElement("option");
-      option.value = r.id;
-      option.textContent = `${r.equipo} (${r.cliente}) - $${r.costoTotal}`;
-      reparacionSelect.appendChild(option);
+      option.value = String(p.id);
+      option.textContent = `${p.nombre} - $${p.precio}`;
+      productoSelect.appendChild(option);
     }
   });
+
+  localStorage.setItem("inventario", JSON.stringify(productos)); // guardar los ids si se asignaron
 }
 
-// Función para agregar un producto seleccionado a la factura
+
+// Renderizar reparaciones
+function renderizarReparaciones(filtro = "") {
+  reparacionSelect.innerHTML = "<option value=''>Seleccione una reparación</option>";
+  reparaciones = JSON.parse(localStorage.getItem("reparaciones")) || [];
+
+  const filtroTexto = filtro.toLowerCase();
+  const reparacionesFiltradas = reparaciones.filter(r => {
+    const info = `${r.equipo} ${r.cliente} ${r.id}`.toLowerCase();
+    return r.estado === "Lista" && info.includes(filtroTexto);
+  });
+
+  reparacionesFiltradas.forEach(r => {
+    const option = document.createElement("option");
+    option.value = String(r.id);
+    const total = calcularCostoTotal(r);
+    option.textContent = `${r.equipo} (${r.cliente}) - $${total}`;
+    reparacionSelect.appendChild(option);
+  });
+}
+
+// Calcular costo total de una reparación
+function calcularCostoTotal(reparacion) {
+  return reparacion.productos?.reduce((acc, p) => acc + parseFloat(p.costo || 0), 0) || 0;
+}
+
+// Agregar producto
 function agregarProducto() {
   const productoId = productoSelect.value;
-  const producto = productos.find(p => p.id === productoId);
+  if (!productoId) return alert("Selecciona un producto válido.");
 
-  if (producto) {
+  const producto = productos.find(p => String(p.id) === productoId);
+  if (producto && producto.stock > 0) {
     productosSeleccionados.push({
       tipo: 'Producto',
       nombre: producto.nombre,
-      precio: producto.precio
+      precio: parseFloat(producto.precio)
     });
-
-    totalFactura += producto.precio;
     actualizarFactura();
+  } else {
+    alert("Producto no disponible en inventario.");
   }
 }
 
-
-// Función para agregar una reparación seleccionada a la factura
+// Agregar reparación
 function agregarReparacion() {
   const reparacionId = reparacionSelect.value;
-  const reparacion = reparaciones.find(r => r.id === reparacionId);
+  if (!reparacionId) return alert("Selecciona una reparación válida.");
 
+  const reparacion = reparaciones.find(r => String(r.id) === reparacionId);
   if (reparacion) {
+    const total = calcularCostoTotal(reparacion);
     productosSeleccionados.push({
       tipo: 'Reparación',
-      nombre: reparacion.equipo,
-      precio: reparacion.costoTotal
+      equipo: reparacion.equipo,
+      cliente: reparacion.cliente,
+      telefono: reparacion.telefono,
+      falla: reparacion.falla,
+      abono: reparacion.abono,
+      productos: reparacion.productos,
+      precio: total
     });
-
-    totalFactura += reparacion.costoTotal;
     actualizarFactura();
+  } else {
+    alert("Reparación no encontrada.");
   }
 }
 
-// Función para actualizar el total y mostrar los productos seleccionados
+// Agregar servicio a la factura
+document.getElementById("formServicio").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const nombre = document.getElementById("servicioCliente").value.trim();
+  const descripcion = document.getElementById("servicioDescripcion").value.trim();
+  const precio = parseFloat(document.getElementById("servicioPrecio").value);
+
+  if (!nombre || !descripcion || isNaN(precio)) {
+    return alert("Completa todos los campos del servicio correctamente.");
+  }
+
+  productosSeleccionados.push({
+    tipo: "Servicio",
+    nombre: `${descripcion} (${nombre})`,
+    precio: precio
+  });
+
+  document.getElementById("formServicio").reset();
+  actualizarFactura();
+});
+
+// Actualizar factura
 function actualizarFactura() {
   productosSeleccionadosUl.innerHTML = "";
-  productosSeleccionados.forEach(p => {
+  totalFactura = 0;
+
+  productosSeleccionados.forEach((item, index) => {
     const li = document.createElement("li");
-    li.textContent = `${p.nombre} - $${p.precio}`;
+    if (item.tipo === "Reparación") {
+      li.textContent = `${item.tipo}: ${item.equipo} (${item.cliente}) - $${item.precio.toFixed(2)}`;
+    } else {
+      li.textContent = `${item.tipo}: ${item.nombre} - $${item.precio.toFixed(2)}`;
+    }
+
+    const eliminarBtn = document.createElement("button");
+    eliminarBtn.textContent = "❌";
+    eliminarBtn.onclick = () => {
+      if (confirm(`¿Quitar este ítem de la factura?`)) {
+        productosSeleccionados.splice(index, 1);
+        actualizarFactura();
+      }
+    };
+
+    li.appendChild(eliminarBtn);
     productosSeleccionadosUl.appendChild(li);
+    totalFactura += item.precio;
   });
 
   totalFacturaSpan.textContent = totalFactura.toFixed(2);
 }
 
-// Generar la factura en PDF
-generarFacturaBtn.addEventListener("click", () => {
-    if (productosSeleccionados.length > 0) {
-      const fecha = new Date().toISOString().slice(0, 10);
-  
-      const factura = {
-        id: Date.now(),
-        productos: productosSeleccionados,
-        total: totalFactura,
-        fecha: fecha,
-        descripcion: productosSeleccionados.map(p => p.nombre).join(", ")
-      };
-  
-      // Guardar en LocalStorage
-      const facturasGuardadas = JSON.parse(localStorage.getItem("facturas")) || [];
-      facturasGuardadas.push({
-        monto: factura.total,
-        fecha: factura.fecha,
-        descripcion: factura.descripcion
-      });
-      localStorage.setItem("facturas", JSON.stringify(facturasGuardadas));
-  
-      // Generar PDF
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text('Factura de Venta', 14, 20);
-  
-      let yPosition = 30;
-      productosSeleccionados.forEach(p => {
-        doc.setFontSize(12);
-        doc.text(`${p.tipo}: ${p.nombre} - $${p.precio}`, 14, yPosition);
-        yPosition += 10;
-      });
-  
-      doc.text(`Total: $${totalFactura.toFixed(2)}`, 14, yPosition);
-  
-      doc.save(`Factura_${factura.id}.pdf`);
-  
-      // Limpiar factura actual
-      productosSeleccionados = [];
-      totalFactura = 0;
-      actualizarFactura();
-  
-      alert("Factura generada y guardada exitosamente.");
-    } else {
-      alert("Por favor, agregue productos o reparaciones a la factura.");
+// Vaciar factura completa
+vaciarFacturaBtn.addEventListener("click", () => {
+  if (productosSeleccionados.length === 0) return alert("La factura ya está vacía.");
+  if (confirm("¿Seguro que deseas vaciar todos los ítems?")) {
+    productosSeleccionados = [];
+    totalFactura = 0;
+    actualizarFactura();
+  }
+});
+
+// Generar la factura
+generarFacturaBtn?.addEventListener("click", () => {
+  if (productosSeleccionados.length === 0) {
+    return alert("Agrega productos, servicios o reparaciones antes de facturar.");
+  }
+
+  const fecha = new Date().toISOString().split("T")[0];
+  const factura = {
+    id: Date.now(),
+    fecha: fecha,
+    items: productosSeleccionados,
+    total: totalFactura,
+    descripcion: productosSeleccionados.map(p => p.nombre || p.equipo || "").join(", ")
+  };
+
+  const facturasGuardadas = JSON.parse(localStorage.getItem("facturas")) || [];
+  facturasGuardadas.push(factura);
+  localStorage.setItem("facturas", JSON.stringify(facturasGuardadas));
+
+  let totalGanancia = 0;
+
+productosSeleccionados.forEach(p => {
+  if (p.tipo === "Producto") {
+    const prod = productos.find(item => item.nombre === p.nombre);
+    if (prod && prod.stock > 0) {
+      prod.stock -= 1;
+      const ganancia = parseFloat(p.precio) - parseFloat(prod.costo || 0);
+      totalGanancia += ganancia;
+    }
+  }
+
+  if (p.tipo === "Reparación") {
+    const costo = (p.productos || []).reduce((acc, prod) => acc + (parseFloat(prod.costo) || 0), 0);
+    const ganancia = p.precio - costo;
+    totalGanancia += ganancia;
+    reparaciones = reparaciones.filter(r => !(r.equipo === p.equipo && r.cliente === p.cliente));
+  }
+});
+
+const ganancias = JSON.parse(localStorage.getItem("ganancias")) || [];
+ganancias.push({
+  fecha: factura.fecha,
+  facturaId: factura.id,
+  ganancia: totalGanancia
+});
+localStorage.setItem("ganancias", JSON.stringify(ganancias));
+
+
+  // 🟠 Actualizar inventario y reparaciones
+  productosSeleccionados.forEach(p => {
+    if (p.tipo === "Producto") {
+      const prod = productos.find(item => item.nombre === p.nombre);
+      if (prod && prod.stock > 0) prod.stock -= 1;
+    }
+    if (p.tipo === "Reparación") {
+      reparaciones = reparaciones.filter(r => !(r.equipo === p.equipo && r.cliente === p.cliente));
     }
   });
-  
 
-// Cargar productos y reparaciones cuando se cargue la página
+  localStorage.setItem("inventario", JSON.stringify(productos));
+  localStorage.setItem("reparaciones", JSON.stringify(reparaciones));
+
+  // 🧾 Generar PDF con jsPDF
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const logo = ''; // ⚠️ Reemplaza con tu logo en base64 si deseas usarlo
+
+  try {
+    if (logo) doc.addImage(logo, 'PNG', 14, 10, 30, 30);
+  } catch (e) {
+    console.warn("Logo no válido o no cargado.");
+  }
+
+  doc.setFontSize(16);
+  doc.text("Factura de Venta", 105, 20, null, null, "center");
+
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${factura.fecha}`, 150, 20);
+  doc.text(`Factura #: ${factura.id}`, 150, 26);
+
+  let y = 50;
+  doc.setFontSize(12);
+  doc.text("Detalle:", 14, y); y += 8;
+
+  factura.items.forEach((p, i) => {
+    if (p.tipo === "Reparación") {
+      doc.text(`${i + 1}. Reparación de ${p.equipo} (${p.cliente})`, 20, y); y += 6;
+      doc.text(`   Falla: ${p.falla}`, 22, y); y += 6;
+      doc.text(`   Teléfono: ${p.telefono}`, 22, y); y += 6;
+      if (p.abono) {
+        doc.text(`   Abono: $${parseFloat(p.abono).toFixed(2)}`, 22, y); y += 6;
+      }
+      if (p.productos?.length) {
+        doc.text(`   Productos utilizados:`, 22, y); y += 6;
+        p.productos.forEach(prod => {
+          doc.text(`   - ${prod.nombre} - $${prod.costo}`, 26, y); y += 6;
+        });
+      }
+    } else {
+      doc.text(`${i + 1}. ${p.tipo}: ${p.nombre}`, 20, y);
+      doc.text(`$${p.precio.toFixed(2)}`, 180, y, null, null, "right");
+      y += 8;
+    }
+  });
+
+  y += 5;
+  doc.line(14, y, 195, y); y += 7;
+
+  doc.setFontSize(13);
+  doc.text("TOTAL:", 140, y);
+  doc.text(`$${factura.total.toFixed(2)}`, 180, y, null, null, "right");
+
+  y += 20;
+  doc.setFontSize(10);
+  doc.text("Gracias por su compra", 14, y);
+  doc.text("Alberto Services", 14, y + 6);
+  doc.text("Tel: 809-555-1234", 14, y + 12);
+  doc.text("Correo: contacto@albertoservices.com", 14, y + 18);
+  doc.text("Dirección: Calle Principal #123", 14, y + 24);
+
+  window.open(doc.output("bloburl"));
+
+  // Reset
+  productosSeleccionados = [];
+  totalFactura = 0;
+  actualizarFactura();
+  renderizarProductos();
+  renderizarReparaciones();
+
+  alert("Factura generada con éxito.");
+});
+
+
+// Inicializar
 window.onload = () => {
   renderizarProductos();
   renderizarReparaciones();
+  actualizarFactura();
 };
 
 document.getElementById("agregarProductoBtn").addEventListener("click", agregarProducto);
 document.getElementById("agregarReparacionBtn").addEventListener("click", agregarReparacion);
+
+
+                                                                             // historial de facturacion //
+
+// Referencias del formulario
+const form = document.getElementById('facturaForm');
+let numeroFactura = 1;
+
+// Cargar el número de factura desde LocalStorage si existe
+if (localStorage.getItem('numeroFactura')) {
+    numeroFactura = parseInt(localStorage.getItem('numeroFactura'));
+}
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Capturar datos del formulario
+    const cliente = document.getElementById('cliente').value;
+    const fecha = document.getElementById('fecha').value;
+    const monto = document.getElementById('monto').value;
+    const estado = document.getElementById('estado').value;
+
+    // Crear objeto de factura
+    const factura = {
+        numero: `F${String(numeroFactura).padStart(3, '0')}`,
+        cliente,
+        fecha,
+        monto: `$${monto}`,
+        estado
+    };
+
+    // Guardar en LocalStorage
+    let facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+    facturas.push(factura);
+    localStorage.setItem('facturas', JSON.stringify(facturas));
+
+    // Incrementar el número de factura
+    numeroFactura++;
+    localStorage.setItem('numeroFactura', numeroFactura);
+
+    // Limpiar el formulario
+    form.reset();
+    alert('Factura registrada con éxito');
+});
+
+

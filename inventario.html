@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+
+  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inventario - Sistema Celulares</title>
   <link rel="stylesheet" href="inventario.css" />
+  <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body>
 
+  
   <header>
     <h1>Inventario de Artículos</h1>
   </header>
@@ -24,6 +29,9 @@
         <input type="text" name="marca" placeholder="Marca" />
         <input type="text" name="imei" placeholder="IMEI" />
         <input type="text" name="descripcion" placeholder="Descripción" />
+        <label for="stock">Stock:</label>
+        <input type="number" id="stock" name="stock" required>
+
       </div>
       <button type="submit" name="btnGuardar">Agregar</button>
       <button type="button" onclick="limpiarFormulario()">Limpiar</button>

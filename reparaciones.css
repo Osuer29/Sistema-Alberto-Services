@@ -74,7 +74,6 @@
     margin-right: 10px;
   }
   
-  /* Modal Taller */
   .modal {
     display: none;
     position: fixed;
@@ -83,31 +82,26 @@
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.6);
   }
   
   .modal-content {
-    background-color: #fff;
+    background: #fff;
     margin: 10% auto;
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 10px;
     width: 90%;
     max-width: 500px;
     position: relative;
   }
   
-  .close {
-    color: #d63031;
+  .close-editar {
     position: absolute;
-    top: 15px;
+    top: 10px;
     right: 20px;
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 24px;
+    color: red;
     cursor: pointer;
   }
   
-
-.modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-.modal-content { background: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; position: relative; }
-.close-editar { position: absolute; top: 10px; right: 20px; font-size: 24px; color: red; cursor: pointer; }
+  

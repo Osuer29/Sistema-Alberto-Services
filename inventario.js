@@ -20,7 +20,7 @@ function limpiarFormulario() {
 function renderizarInventario(data = inventario) {
   tabla.innerHTML = '';
   if (data.length === 0) {
-    tabla.innerHTML = '<tr><td colspan="8">No hay artículos registrados.</td></tr>';
+    tabla.innerHTML = '<tr><td colspan="9">No hay artículos registrados.</td></tr>';
     return;
   }
 
@@ -34,6 +34,7 @@ function renderizarInventario(data = inventario) {
       <td>${item.precioMayor || '-'}</td>
       <td>${item.imei || '-'}</td>
       <td>${item.descripcion || '-'}</td>
+      <td>${item.stock || 0}</td>
       <td>
         <button onclick="editarArticulo(${index})">✏️</button>
         <button onclick="eliminarArticulo(${index})">🗑️</button>
@@ -41,6 +42,12 @@ function renderizarInventario(data = inventario) {
     `;
     tabla.appendChild(fila);
   });
+
+  // Mostrar total (opcional si usas <p id="totalArticulos"></p> en el HTML)
+  const totalEl = document.getElementById('totalArticulos');
+  if (totalEl) {
+    totalEl.textContent = `Total artículos: ${data.length}`;
+  }
 }
 
 function agregarArticulo(e) {
@@ -54,17 +61,28 @@ function agregarArticulo(e) {
     modelo: formulario['modelo'].value.trim(),
     marca: formulario['marca'].value.trim(),
     imei: formulario['imei'].value.trim(),
-    descripcion: formulario['descripcion'].value.trim()
+    descripcion: formulario['descripcion'].value.trim(),
+    stock: parseInt(formulario['stock'].value.trim()) || 0
   };
 
-  if (!nuevo.nombre || !nuevo.costo || !nuevo.precio) {
-    alert('Nombre, Costo y Precio son obligatorios.');
+  if (!nuevo.nombre || !nuevo.costo || !nuevo.precio || nuevo.stock < 0) {
+    alert('Nombre, Costo y Precio son obligatorios. El stock no puede ser negativo.');
     return;
   }
 
   if (editIndex !== null) {
     inventario[editIndex] = nuevo;
   } else {
+    if (nuevo.imei) {
+      const existingIndex = inventario.findIndex(item => item.imei === nuevo.imei);
+      if (existingIndex !== -1) {
+        inventario[existingIndex].stock += nuevo.stock;
+        guardarInventario();
+        limpiarFormulario();
+        renderizarInventario();
+        return;
+      }
+    }
     inventario.push(nuevo);
   }
 
@@ -91,6 +109,7 @@ function editarArticulo(index) {
   formulario['marca'].value = item.marca || '';
   formulario['imei'].value = item.imei || '';
   formulario['descripcion'].value = item.descripcion || '';
+  formulario['stock'].value = item.stock || '';
   formulario['btnGuardar'].textContent = 'Actualizar';
   editIndex = index;
 }
@@ -100,7 +119,8 @@ function buscarInventario() {
   const resultado = inventario.filter(item =>
     item.nombre.toLowerCase().includes(texto) ||
     item.marca?.toLowerCase().includes(texto) ||
-    item.modelo?.toLowerCase().includes(texto)
+    item.modelo?.toLowerCase().includes(texto) ||
+    item.imei?.toLowerCase().includes(texto)
   );
   renderizarInventario(resultado);
 }
@@ -108,6 +128,43 @@ function buscarInventario() {
 // ===================== EVENTOS =====================
 formulario.addEventListener('submit', agregarArticulo);
 buscador.addEventListener('input', buscarInventario);
+
+const formInventario = document.getElementById('formularioInventario');
+const listaInventario = document.getElementById('tablaInventario');
+
+// Función para renderizar el inventario
+const renderInventario = (productos) => {
+  listaInventario.innerHTML = '';
+  productos.forEach(producto => {
+    const fila = document.createElement('tr');
+    fila.innerHTML = `
+      <td>${producto.nombre}</td>
+      <td>${producto.marca}</td>
+      <td>${producto.modelo}</td>
+      <td>${producto.precio}</td>
+      <td>${producto.precioMayor}</td>
+      <td>${producto.imei}</td>
+      <td>${producto.descripcion}</td>
+      <td>${producto.stock}</td>
+      <td><button onclick="eliminarProducto(${producto.id})">🗑️</button></td>
+    `;
+    listaInventario.appendChild(fila);
+  });
+};
+
+// Cargar inventario al cargar la página
+fetch('http://localhost:4000/api/inventario')
+  .then(res => res.json())
+  .then(data => renderInventario(data));
+
+const socket = io("http://localhost:4000");
+
+socket.on('actualizarInventario', () => {
+    fetch('http://localhost:4000/api/inventario')
+      .then(res => res.json())
+      .then(data => renderInventario(data));
+});
+
 
 // ===================== INICIAL =====================
 renderizarInventario();
