@@ -168,3 +168,5 @@ socket.on('actualizarInventario', () => {
 
 // ===================== INICIAL =====================
 renderizarInventario();
+
+

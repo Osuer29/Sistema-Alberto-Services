@@ -139,4 +139,5 @@ document.addEventListener('DOMContentLoaded', function () {
   const hoy = new Date().toISOString().slice(0, 10);
   fechaInput.value = hoy;
   actualizarCuadre(hoy);
+
 });

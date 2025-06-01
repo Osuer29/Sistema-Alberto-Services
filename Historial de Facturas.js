@@ -1,49 +1,60 @@
-// Referencia al cuerpo de la tabla
 const facturaBody = document.getElementById('facturaBody');
-
-// Cargar datos desde LocalStorage
 let facturas = JSON.parse(localStorage.getItem('facturas')) || [];
 
-// Función para renderizar las facturas
 function renderFacturas() {
-    facturaBody.innerHTML = ''; // Limpiar la tabla
-    facturas.forEach((factura, index) => {
-        const row = document.createElement('tr');
+  facturaBody.innerHTML = ''; // Limpiar tabla
 
-        row.innerHTML = `
-            <td>${factura.numero}</td>
-            <td>${factura.cliente}</td>
-            <td>${factura.fecha}</td>
-            <td>${factura.monto}</td>
-            <td>${factura.estado}</td>
-            <td>
-                <button class="btn-eliminar" data-index="${index}">Eliminar</button>
-            </td>
+  facturas.forEach((factura, index) => {
+    const row = document.createElement('tr');
+
+    const detalleItems = factura.items.map((item, i) => {
+      if (item.tipo === "Reparación") {
+        let productosUsados = (item.productos || []).map(prod => `- ${prod.nombre}: $${prod.costo}`).join("<br>");
+        return `
+          <strong>${i + 1}. Reparación</strong><br>
+          Equipo: ${item.equipo}<br>
+          Cliente: ${item.cliente}<br>
+          Teléfono: ${item.telefono}<br>
+          Falla: ${item.falla}<br>
+          Abono: $${parseFloat(item.abono || 0).toFixed(2)}<br>
+          Productos usados:<br>${productosUsados}<br>
+          Total: $${item.precio.toFixed(2)}
         `;
+      } else {
+        return `
+          <strong>${i + 1}. ${item.tipo}</strong><br>
+          ${item.cliente ? `Cliente: ${item.cliente}<br>` : ""}
+          Nombre: ${item.nombre}<br>
+          Precio: $${item.precio.toFixed(2)}
+        `;
+      }
+    }).join("<hr>");
 
-        facturaBody.appendChild(row);
-    });
+    row.innerHTML = `
+      <td style="text-align:center">${factura.id || factura.numero}</td>
+      <td style="text-align:center">${factura.fecha}</td>
+      <td style="text-align:left">${detalleItems}</td>
+      <td style="text-align:center"><strong>$${factura.total.toFixed(2)}</strong></td>
+      <td style="text-align:center">
+        <button class="btn-eliminar" data-index="${index}">Eliminar</button>
+      </td>
+    `;
 
-    // Agregar eventos a los botones de eliminar
-    document.querySelectorAll('.btn-eliminar').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const index = e.target.getAttribute('data-index');
-            eliminarFactura(index);
-        });
+    facturaBody.appendChild(row);
+  });
+
+  document.querySelectorAll('.btn-eliminar').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const index = e.target.getAttribute('data-index');
+      eliminarFactura(index);
     });
+  });
 }
 
-// Función para eliminar una factura
 function eliminarFactura(index) {
-    // Eliminar del array
-    facturas.splice(index, 1);
-
-    // Actualizar LocalStorage
-    localStorage.setItem('facturas', JSON.stringify(facturas));
-
-    // Recargar la tabla
-    renderFacturas();
+  facturas.splice(index, 1);
+  localStorage.setItem('facturas', JSON.stringify(facturas));
+  renderFacturas();
 }
 
-// Renderizar la tabla al cargar
 renderFacturas();
